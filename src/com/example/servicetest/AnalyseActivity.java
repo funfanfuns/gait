@@ -68,9 +68,12 @@ public class AnalyseActivity extends Activity {
 	private TextView status;
 	
 	
-	private ArrayList<ArrayList<Float>> xSteps;
-	private ArrayList<ArrayList<Float>> ySteps;
-	private ArrayList<ArrayList<Float>> zSteps;
+	private ArrayList<ArrayList<Float>> xSteps = new ArrayList<ArrayList<Float>>();
+	private ArrayList<ArrayList<Float>> ySteps = new ArrayList<ArrayList<Float>>();
+	private ArrayList<ArrayList<Float>> zSteps = new ArrayList<ArrayList<Float>>();
+	private ArrayList<Integer> stepMidIndex=new ArrayList<Integer>();
+	private ArrayList<Integer> stepBeginIndex=new ArrayList<Integer>();
+	private ArrayList<Integer> stepEndIndex=new ArrayList<Integer>();
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -499,6 +502,61 @@ public class AnalyseActivity extends Activity {
 	public void stepSegmentation()
 	{
 		//
+		int length = Yacc.size(),firstLocalMinIndex,secondLocalMinIndex,midLocalMinIndex ;
+		float firstLocalMinValue, secondLocalMinValue,midLocalMinValue;
+		int begin=100;
+		int maxM=67,normalM=56,d=11;
+		
+		
+		while(begin+100<length){
+			ArrayList<Float> currentStep = new ArrayList<Float>();
+			firstLocalMinValue=Yacc.get(begin);
+			firstLocalMinIndex=begin;
+			for(int i=begin;i<=begin+maxM;i++)
+			{
+				
+				if(firstLocalMinValue>Yacc.get(i))
+				{
+					firstLocalMinValue=Yacc.get(i);
+					firstLocalMinIndex=i;
+				}
+			}
+			stepBeginIndex.add(firstLocalMinIndex);
+			
+			
+			secondLocalMinValue=Yacc.get(firstLocalMinIndex+normalM-d);
+			secondLocalMinIndex=firstLocalMinIndex+normalM-d;
+			for(int i=firstLocalMinIndex+normalM-d;i<=firstLocalMinIndex+normalM+d;i++)
+			{
+				if(secondLocalMinValue>Yacc.get(i))
+				{
+					secondLocalMinValue=Yacc.get(i);
+					secondLocalMinIndex=i;
+					begin=i;
+				}
+			}
+			stepEndIndex.add(firstLocalMinIndex);
+			
+			
+			int mBegin=begin+firstLocalMinIndex*2/3+secondLocalMinIndex/3;
+			int mEnd=begin+firstLocalMinIndex/3+secondLocalMinIndex*2/3;
+			midLocalMinIndex=mBegin;
+			midLocalMinValue=Yacc.get(midLocalMinIndex);
+			for(int i=mBegin;i<mEnd;i++)
+			{
+				if(midLocalMinValue>Yacc.get(i))
+				{
+					midLocalMinValue=Yacc.get(i);
+					midLocalMinIndex=i;
+					
+				}
+			}
+			stepMidIndex.add(midLocalMinIndex);
+			for(int i=firstLocalMinIndex;i<secondLocalMinValue;i++)
+				currentStep.add(Yacc.get(i));
+			System.out.println(currentStep);
+			ySteps.add(currentStep);
+		}
 	}
 	
 	//提取步周期
