@@ -24,7 +24,7 @@ public class CountService extends Service {
 	
 	private SensorManager sm;
 	private float X, Y, Z;
-	private static final int length = 200; // 缓存长度
+	private static final int length = 15000; // 缓存长度
 	
 	private ArrayList<Float> Xacc = new ArrayList<Float>();
 	private ArrayList<Float> Yacc = new ArrayList<Float>();

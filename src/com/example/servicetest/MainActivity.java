@@ -80,7 +80,7 @@ public class MainActivity extends Activity {
 	float[] Zyv = new float[length];// 这是对应Z加速度的Y轴暂存点
 	float[] Syv = new float[length];// 这是对应SVM的Y轴暂存点
 
-	private EditText editText = null;
+	//private EditText editText = null;
 	private MyReceiver receiver = null;
 	private Button writebtn, readbtn;
 	private Button btn_yes;
@@ -103,7 +103,7 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 
-		editText = (EditText) findViewById(R.id.editText);
+		//editText = (EditText) findViewById(R.id.editText);
 		writebtn = (Button) findViewById(R.id.writebtn);
 		readbtn = (Button) findViewById(R.id.readbtn);
 		mNotificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
@@ -208,7 +208,7 @@ public class MainActivity extends Activity {
 						showNotify();
 					}
 				}
-				editText.setText(Sacc.get(0) + "");
+				//editText.setText(Sacc.get(0) + "");
 				//updateChart();
 			}
 			if (action.equals(ACTION_BTN_YES)) {
@@ -468,6 +468,7 @@ public class MainActivity extends Activity {
 				File filedir = new File(path);
 				if (!filedir.exists())
 					filedir.mkdir();
+				System.out.println(file.getCanonicalPath() + "/com.example.test" + "/" + date + ".txt");
 				FileOutputStream fileW = new FileOutputStream(
 						file.getCanonicalPath() + "/com.example.test" + "/" + date + ".txt");
 				fileW.write(str.getBytes());

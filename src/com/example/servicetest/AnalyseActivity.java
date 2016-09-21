@@ -46,7 +46,7 @@ public class AnalyseActivity extends Activity {
 	private XYMultipleSeriesRenderer renderer;
 	private Context context;
 	private int addX = -1;
-
+	private String result="result: ";
 	private ArrayList<Float> Xacc = new ArrayList<Float>();
 	private ArrayList<Float> Yacc = new ArrayList<Float>();
 	private ArrayList<Float> Zacc = new ArrayList<Float>();
@@ -71,6 +71,12 @@ public class AnalyseActivity extends Activity {
 	private ArrayList<ArrayList<Float>> xSteps = new ArrayList<ArrayList<Float>>();
 	private ArrayList<ArrayList<Float>> ySteps = new ArrayList<ArrayList<Float>>();
 	private ArrayList<ArrayList<Float>> zSteps = new ArrayList<ArrayList<Float>>();
+	
+	/***
+	 * 这三个数组对应的是每一步的开始、中间（左右步划分）、和结束的加速度的索引
+	 *如stepBeginIndex.get(0)、stepMidIndex.get(0)、stepEndIndex.get(0)，就是第一步的开始、中间和结束的索引
+	 */
+
 	private ArrayList<Integer> stepMidIndex=new ArrayList<Integer>();
 	private ArrayList<Integer> stepBeginIndex=new ArrayList<Integer>();
 	private ArrayList<Integer> stepEndIndex=new ArrayList<Integer>();
@@ -91,31 +97,37 @@ public class AnalyseActivity extends Activity {
 		btn = (Button) findViewById(R.id.btn);
 		status = (TextView) findViewById(R.id.status);
 
-		InitFrame();
-		handler = new Handler() {
-			@Override
-			public void handleMessage(Message msg) {
-				// 刷新图表
-				updateChart();
-				super.handleMessage(msg);
-			}
-		};
+		//InitFrame();
+//		handler = new Handler() {
+//			@Override
+//			public void handleMessage(Message msg) {
+//				// 刷新图表
+//				updateChart();
+//				super.handleMessage(msg);
+//			}
+//		};
 
-		task = new TimerTask() {
-			@Override
-			public void run() {
-				Message message = new Message();
-				message.what = 1;
-				handler.sendMessage(message);
-			}
-		};
-
-		timer.schedule(task, 50, 50); // 设置绘制时间
+//		task = new TimerTask() {
+//			@Override
+//			public void run() {
+//				Message message = new Message();
+//				message.what = 1;
+//				handler.sendMessage(message);
+//			}
+//		};
+		System.out.println("test 1");
+		//timer.schedule(task, 50, 50); // 设置绘制时间
 		btn.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				// TODO Auto-generated method stub
-				judgeFall();
+				//judgeFall();
+				System.out.println("test 2");
+				//分别使用Y轴的加速度进行分割。
+				//stepSegmentation(Xacc);
+				stepSegmentation(Yacc);
+				//stepSegmentation(Zacc);
+				status.setText(result);
 			}
 		});
 	}
@@ -301,6 +313,8 @@ public class AnalyseActivity extends Activity {
 				//showMessage("疑似跌倒发生");
 			}
 		}
+		
+		
 		if (tem > 0) {
 			if (tem - WINDOW_LENGTH / 2 > 0 && tem + WINDOW_LENGTH / 2 < Sacc.size()) {
 				for (int i = 0; i < WINDOW_LENGTH; i++) {
@@ -498,53 +512,70 @@ public class AnalyseActivity extends Activity {
 	 * 
 	 * 
 	 *************************************/
-	//步周期分割
-	public void stepSegmentation()
+	/*
+	 * 步周期分割
+	 *取Y轴方向加速度最大的时候作为分割标志。
+	 *即一大步踩三次地，每次踩地的时候加由于身体受到向上的反作用力，所以认为此时的Y轴加速度最大
+	 *
+	 *
+	 *
+	 *
+	 */
+	public void stepSegmentation(ArrayList<Float> Yacc)
 	{
 		//
-		int length = Yacc.size(),firstLocalMinIndex,secondLocalMinIndex,midLocalMinIndex ;
-		float firstLocalMinValue, secondLocalMinValue,midLocalMinValue;
-		int begin=100;
+		int length = Yacc.size(),firstLocalMinIndex=0,secondLocalMinIndex=0,midLocalMinIndex =0;
+		float firstLocalMinValue=0, secondLocalMinValue=0,midLocalMinValue=0;
+		int begin=200;
 		int maxM=67,normalM=56,d=11;
-		
-		
-		while(begin+100<length){
+		length = Yacc.size();
+		System.out.println("length = " + length);
+		System.out.println("begin = " + begin);
+		int c=0;
+		while(begin+200<length){
+			c++;
+			System.out.println("begin in while = " + begin);
 			ArrayList<Float> currentStep = new ArrayList<Float>();
-			firstLocalMinValue=Yacc.get(begin);
-			firstLocalMinIndex=begin;
-			for(int i=begin;i<=begin+maxM;i++)
-			{
-				
-				if(firstLocalMinValue>Yacc.get(i))
+			if(c==1){
+				firstLocalMinValue=Yacc.get(begin);
+				firstLocalMinIndex=begin;
+				for(int i=begin;i<=begin+maxM;i++)
 				{
-					firstLocalMinValue=Yacc.get(i);
-					firstLocalMinIndex=i;
+					if(firstLocalMinValue<=Yacc.get(i))
+					{
+						firstLocalMinValue=Yacc.get(i);
+						firstLocalMinIndex=i;
+					}
 				}
+				
+			}
+			else
+			{
+				firstLocalMinValue=Yacc.get(begin);
+				firstLocalMinIndex=begin;
 			}
 			stepBeginIndex.add(firstLocalMinIndex);
-			
-			
 			secondLocalMinValue=Yacc.get(firstLocalMinIndex+normalM-d);
 			secondLocalMinIndex=firstLocalMinIndex+normalM-d;
 			for(int i=firstLocalMinIndex+normalM-d;i<=firstLocalMinIndex+normalM+d;i++)
 			{
-				if(secondLocalMinValue>Yacc.get(i))
+				if(secondLocalMinValue<=Yacc.get(i))
 				{
 					secondLocalMinValue=Yacc.get(i);
 					secondLocalMinIndex=i;
 					begin=i;
 				}
 			}
-			stepEndIndex.add(firstLocalMinIndex);
+			stepEndIndex.add(secondLocalMinIndex);
 			
 			
-			int mBegin=begin+firstLocalMinIndex*2/3+secondLocalMinIndex/3;
-			int mEnd=begin+firstLocalMinIndex/3+secondLocalMinIndex*2/3;
+			int mBegin=firstLocalMinIndex*2/3+secondLocalMinIndex/3;
+			int mEnd=firstLocalMinIndex/3+secondLocalMinIndex*2/3;
 			midLocalMinIndex=mBegin;
 			midLocalMinValue=Yacc.get(midLocalMinIndex);
 			for(int i=mBegin;i<mEnd;i++)
 			{
-				if(midLocalMinValue>Yacc.get(i))
+				if(midLocalMinValue<=Yacc.get(i))
 				{
 					midLocalMinValue=Yacc.get(i);
 					midLocalMinIndex=i;
@@ -554,9 +585,16 @@ public class AnalyseActivity extends Activity {
 			stepMidIndex.add(midLocalMinIndex);
 			for(int i=firstLocalMinIndex;i<secondLocalMinValue;i++)
 				currentStep.add(Yacc.get(i));
-			System.out.println(currentStep);
-			ySteps.add(currentStep);
+			System.out.println("start: "+firstLocalMinIndex+"\t mid: "+midLocalMinIndex+"\t end: "+secondLocalMinIndex);
+			System.out.println("\n start: "+firstLocalMinValue+"\t mid: "+midLocalMinValue+"\t end: "+secondLocalMinValue);
+			
+			//ySteps.add(currentStep);
+			//status.setText("care"+String.valueOf(stepEndIndex));
+			
 		}
+		
+		//status.setText("time: "+length/50+"s, step: "+c);
+		result+="time: "+length/50+"s, step: "+c+"\n";
 	}
 	
 	//提取步周期
@@ -570,8 +608,24 @@ public class AnalyseActivity extends Activity {
 	{
 	}
 	
-	//提取倾角
-	public void calStepAngel()
+	//提取倾角（未完成）
+	public void calStepAngel(ArrayList<Float>  Yacc)
 	{
+		ArrayList<Float> v=new ArrayList<Float>();
+		ArrayList<Float> d=new ArrayList<Float>();
+		v.add((float) 0);
+		for(int i=1;i<Yacc.size();i++)
+		{
+			
+			v.add(v.get(i-1)+Yacc.get(i));
+		}
+		
+		d.add((float) 0);
+		for(int i=1;i<v.size();i++)
+		{
+			d.add(d.get(i-1)+v.get(i));
+		}
+		System.out.println("V: "+v.get(v.size()-1)+"  D: "+d.get(d.size()-1));
+		result+="\nV: "+v.get(v.size()-1)+"  D: "+d.get(d.size()-1);
 	}
 }
